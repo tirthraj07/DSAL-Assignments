@@ -30,6 +30,10 @@ public:
         }
     }
 
+    void print(){
+        cout<<"u: "<<i<<" v: "<<j<<" weight: "<<weight<<"  | ";
+    }
+
     friend class Graph;
 };
 
@@ -116,18 +120,56 @@ public:
             visited.push_back(e.j);
         }
 
-        return condition1&&condition2;
+        return false;
     }
 
     int kruskal(){
         Edge::sortEdges(edges);
+        
         vector<int> visited;
         int totalWeight = 0;
 
         for(int i=0; i<edges.size(); i++){
             if(!isPresent(visited,edges[i])){
+                edges[i].print();
                 totalWeight += edges[i].weight;
             }
+        }
+
+        return totalWeight;
+    }
+
+    int prims(){
+        int totalWeight = 0;
+
+        vector<int> key(Nodes.size(),INT_MAX);
+        vector<bool> mst(Nodes.size(),false);
+        vector<int> parent(Nodes.size(),-1);
+
+        key[0] = 0;
+        parent[0] = -1;
+
+        for(int i=0; i<Nodes.size(); i++){
+            int mini = INT_MAX;
+            int u;
+            for(int v=0; v<Nodes.size(); v++){
+                if(mst[v]==false && key[v]<mini){
+                    u = v;
+                    mini = key[v];
+                }
+            }
+            mst[u] = true;
+            for(int i=0; i<Nodes.size(); i++){
+                if(matrix[u][i]!=INT_MAX&&mst[i]==false&&matrix[u][i]<key[i]){
+                    parent[i] = u;
+                    key[i] = matrix[u][i];
+                }
+            }
+        }
+
+        for(int i=0; i<Nodes.size(); i++){
+            if(parent[i]==-1) continue;
+            totalWeight += matrix[parent[i]][i];
         }
 
         return totalWeight;
@@ -139,27 +181,39 @@ public:
 
 int main(){
 
-    Graph g(6);
-    g.addNode("A");
-    g.addNode("B");
-    g.addNode("C");
-    g.addNode("D");   
-    g.addNode("E");
-    g.addNode("F");
+    Graph g(9);
+    g.addNode("A");     // 0  
+    g.addNode("B");     // 1
+    g.addNode("C");     // 2
+    g.addNode("D");     // 3  
+    g.addNode("E");     // 4
+    g.addNode("F");     // 5
+    g.addNode("G");     // 6
+    g.addNode("H");     // 7
+    g.addNode("I");     // 8
+
 
 
     g.addEdge("A","B",4);
-    g.addEdge("B","C",2);
-    g.addEdge("A","C",4);
-    g.addEdge("C","D",3);
-    g.addEdge("C","F",2);
-    g.addEdge("C","E",4);
-    g.addEdge("D","E",3);
-    g.addEdge("F","E",3);
+    g.addEdge("A","H",8);
+    g.addEdge("B","H",11);
+    g.addEdge("B","C",8);
+    g.addEdge("C","D",7);
+    g.addEdge("C","F",4);
+    g.addEdge("C","I",2);
+    g.addEdge("D","E",9);
+    g.addEdge("D","F",14);
+    g.addEdge("E","F",10);
+    g.addEdge("F","G",2);
+    g.addEdge("G","I",6);
+    g.addEdge("G","H",1);
+    g.addEdge("H","I",7);
+
 
     g.displayMatrix();
 
-    cout<<"Total Cost : "<<g.kruskal();
+    cout<<"Total Cost : "<<g.kruskal()<<endl;
+    cout<<"Total Cost : "<<g.prims()<<endl;
 
 
 }
