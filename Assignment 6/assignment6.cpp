@@ -1,167 +1,196 @@
 /*
-Assignment 6: 
+Name - Tirthraj Mahajan
+SE - 02 Roll No: 21242
 Represent a given graph using adjacency list to perform DFS and BFS.
-Use the map of the area around the college as the graph. 
-Identify the prominent landmarks as nodes and perform DFS and BFS on that.
 */
 
 #include <iostream>
-#include <vector>
+#include <limits.h>
 #include <queue>
 #include <stack>
 using namespace std;
-class Graph{
+
+/*
+
+This implementation assumes that the vertex name maps with the array index
+So if you want to modify that, then you'd have to create a function for the name to index conversion
+
+*/
+
+class Node {
 private:
-    int nodeNumber;
-    int** arr;
-    vector<string> Nodes;
+    int vertex;
+    int weight;
+    Node *next;
+
 public:
-    Graph(int nodeNumber):nodeNumber(nodeNumber){
-        arr = new int*[nodeNumber];
-        for(int i=0; i<nodeNumber; i++){
-            arr[i] = arr[i] = new int[nodeNumber]; 
-            for (int j = 0; j < nodeNumber; j++) {
-                arr[i][j] = 0;
-            }
+    Node() : vertex(0), weight(INT_MAX), next(nullptr) {}
+    Node(int vertex, int weight) : vertex(vertex), weight(weight), next(nullptr) {}
+    Node(int vertex, int weight, Node *next) : vertex(vertex), weight(weight), next(next) {}
+    friend class Graph;
+};
+
+class Graph {
+private:
+    Node **adj; // Array of List of Nodes
+    int nodes;  // Total number of Nodes
+    bool direction; // direction = 0 Undirected and direction = 1 Directed
+
+public:    
+    Graph(int nodes = 0, bool direction = 0):nodes(nodes), direction(direction){
+
+        // Initializing the adjacency list
+
+        for(int i=0; i<nodes; i++){
+            adj[i] = NULL;
         }
-        addNodes();
+
     }
 
-    ~Graph(){
-        for (int i = 0; i < nodeNumber; i++) {
-            delete[] arr[i];
-        }
-        delete[] arr; 
-    }
-    
-    void addNodes(){
-        cout<<"Add Node Names"<<endl;
-        string name;
-        for(int i=0; i<nodeNumber; i++){
-            cin>>name;
-            Nodes.push_back(name);
-        }
-    }
+    void addEdge(int u, int v, int weight=1){
 
-    int index(string name){
-        for(int i=0; i<nodeNumber; i++){
-            if(Nodes[i]==name) return i;
-        }
-        return -1;
-    }
+        // Checking for an invalid edge just in case so no run-time or logical errors
 
-    string indexOf(int index){
-        if(index>=0&&index<nodeNumber) return Nodes[index];
-        return "";
-    }
-
-    void addEdge(string n1, string n2, bool directed){
-        int index1 = index(n1);
-        int index2 = index(n2);
-        if(index1==-1||index2==-1){
-            cout<<"Invalid Vertice Entered"<<endl;
+        if(u<0 || v<0 || u >= nodes || v >= nodes){
+            cout<<"You Entered : "<<u<<" -> "<<v<<endl;
+            cout<<"Invalid Edge"<<endl;
             return;
         }
 
-        if(!directed){
-            arr[index1][index2] = 1;
-            arr[index2][index1] = 1;
+        // Directed Graph
+        if(direction){
+            push_back(u, v, weight);
         }
-        else{
-            arr[index1][index2] = 1;
+        else{       // Undirected
+            push_back(u, v, weight);
+            push_back(v, u, weight);
         }
     }
 
-    void displayList(){
+    // This function will add a new node containing v in the list at index u
+    void push_back(int u, int v, int weight){
+        // No need to error check as we are already doing that in addEdge function
+
+        if( adj[u] == NULL ){
+            adj[u] = new Node( v , weight );
+            return;
+        }
+
+        Node* newNode = new Node( v, weight );
+        newNode->next = adj[u];
+        adj[u] = newNode;    
+    }
+
+
+    // prints the adjacency list along with the weights in the brackets
+    void print(){
+        cout<<"Printing the adjacency list of the graph"<<endl;
+        cout<<"Vertices: "<<endl;
+        for(int i=0; i<nodes; i++){
+            cout<<i<<" -> ";
+            Node* curr = adj[i];
+            while(curr!=NULL){
+                cout<<curr->vertex<<" ";
+                // cout<<curr->vertex<<" ("<<curr->weight<<") ,";
+                curr = curr->next;
+            }
+            cout<<endl;
+        }
+    }
+    
+    void bfs(int start = 0){
+        // Since we are mapping index to vertex, we can directly do this
+        bool* visited = new bool[nodes];
+        for(int i=0; i<nodes; i++){
+            visited[i] = false;
+        }
         
-        for(int i=0; i<nodeNumber; i++){
-            cout<<indexOf(i)<<" : { ";
-            for(int j=0; j<nodeNumber; j++){
-                if(arr[i][j]==1){
-                    cout<<indexOf(j)<<" ";
-                }
-            }
-            cout<<" }"<<endl;
-        }
-
-    }
-
-    bool notVisited(string node, vector<string>&visited){
-        for(int i=0; i<visited.size(); i++){
-            if(visited[i]==node) return false;
-        }
-        return true;
-    }
-
-    void bfs(){
-        vector<string> visited = {};
-        queue<string>q;
-        q.push(Nodes[0]);
+        // This will allow us to check if a vertex has been visited or not in O(1) rather than O(n)
+        
+        queue<int> q;
+        q.push(start);
+        visited[start] = true;
         while(!q.empty()){
-            int in = index(q.front());
+            int vertex = q.front();
+            
+            cout<<vertex<<" ";
+            
             q.pop();
-            if(notVisited(indexOf(in),visited)){
-                cout<<indexOf(in)<<" ";
-                visited.push_back(indexOf(in));
-                for(int j=0; j<nodeNumber; j++){
-                    if(arr[in][j]==1){
-                        q.push(indexOf(j));
-                    }
+            
+            Node* curr = adj[vertex];
+            
+            
+            while(curr){
+                if(visited[curr->vertex]==false){
+                    q.push(curr->vertex);
+                    visited[curr->vertex] = true;
                 }
+                curr = curr->next;
             }
+            
         }
         cout<<endl;
     }
 
-    void dsf(){
-        vector<string> visited = {};
-        stack<string> st;
-        st.push(Nodes[0]);
-        while(!st.empty()){
-            int in = index(st.top());
-            st.pop();
-            if(notVisited(indexOf(in),visited)){
-                cout<<indexOf(in)<<" ";
-                visited.push_back(indexOf(in));
-                for(int j=nodeNumber-1; j>-1; j--){
-                    if(arr[in][j]==1){
-                        st.push(indexOf(j));
-                    }
-                }
-            }
+    void dfs(int start=0){
+        // Since we are mapping index to vertex, we can directly do this
+        bool* visited = new bool[nodes];
+        for(int i=0; i<nodes; i++){
+            visited[i] = false;
         }
+        
+        // This will allow us to check if a vertex has been visited or not in O(1) rather than O(n)
+        
+        stack<int> st;
+        st.push(start);
+        // visited[start] = true;
+        
+        while(!st.empty()){
+            int vertex = st.top();
+            st.pop();
+            
+            if(vertex[visited]==false){
+                cout<<vertex<<" ";
+                visited[vertex] = true;
+            }
+            
+            Node* curr = adj[vertex];
+            
+            while(curr){
+                if(visited[curr->vertex]==false){
+                    st.push(curr->vertex);
+                    // visited[curr->vertex] = true;
+                }
+                
+                curr = curr->next;
+            }
+            
+        }
+        
         cout<<endl;
+        
+        
     }
 
 };
 
 
 int main(){
-/*
-
-Graph : https://static.javatpoint.com/ds/images/bfs-vs-dfs.png
-
-7
-
-A B C D E F G
-
-A B 0 A D 0 B C 0 B D 0 C D 0 D E 0 E C 0 B G 0 C F 0 B F 0 E G 0
-
-*/
-
-
-    Graph g(7);
-    string n1,n2;
-    bool directed;
-    while(true){
-        cout<<"Add Edge. (u, v) and directed (0/1)"<<endl;
-        cin>>n1;
-        if(n1=="-1") break;
-        cin>>n2>>directed;
-        g.addEdge(n1,n2,directed);
-    }
-
-    g.displayList();
-    g.bfs();
-    g.dsf();
+    //https://www.javatpoint.com/bfs-vs-dfs
+    Graph G(7,0);
+    G.addEdge(0,1);
+    G.addEdge(0,3);
+    G.addEdge(1,3);
+    G.addEdge(1,2);
+    G.addEdge(2,3);
+    G.addEdge(1,5);
+    G.addEdge(2,5);
+    G.addEdge(1,6);
+    G.addEdge(6,4);
+    G.addEdge(4,2);
+    G.addEdge(4,3);
+    G.print();
+    G.bfs();
+    G.dfs();
+    
 }
