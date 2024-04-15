@@ -143,23 +143,23 @@ public:
         
         stack<int> st;
         st.push(start);
-        // visited[start] = true;
+        visited[start] = true;
         
         while(!st.empty()){
             int vertex = st.top();
             st.pop();
             
-            if(vertex[visited]==false){
-                cout<<vertex<<" ";
-                visited[vertex] = true;
-            }
+            // if(vertex[visited]==false){
+            cout<<vertex<<" ";
+                // visited[vertex] = true;
+            // }
             
             Node* curr = adj[vertex];
             
             while(curr){
                 if(visited[curr->vertex]==false){
                     st.push(curr->vertex);
-                    // visited[curr->vertex] = true;
+                    visited[curr->vertex] = true;
                 }
                 
                 curr = curr->next;
