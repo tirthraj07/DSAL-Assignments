@@ -1,219 +1,167 @@
-#include<iostream>
-#include<string>
-#include<vector>
-#include<algorithm>
-#include<limits.h>
-
+#include <iostream>
+#include <string>
+#include <limits.h>
 using namespace std;
 
-class Edge{
-    int i, j, weight;
+class Node{
+private:
+    int vertex;
+    int weight;
+    Node* next;
 public:
-    Edge(int i, int j, int weight):i(i),j(j),weight(weight){}
-
-    bool operator>(const Edge& e2) const {
-        return weight > e2.weight;
-    }
-
-    bool operator<(const Edge& e2) const {
-        return weight < e2.weight;
-    }
-    static void sortEdges(vector<Edge>& vec){
-        for(int i=0; i<vec.size()-1; i++){
-            for(int j=0; j<vec.size()-i-1; j++){
-                if(vec[j]>vec[j+1]){
-                    Edge temp = vec[j];
-                    vec[j] = vec[j+1];
-                    vec[j+1] = temp;
-                }
-            }
-        }
-    }
-
-    void print(){
-        cout<<"u: "<<i<<" v: "<<j<<" weight: "<<weight<<"  | ";
-    }
-
+    Node(int vertex=0,int weight=1, Node* next=NULL):vertex(vertex),weight(weight),next(next){}
+    
     friend class Graph;
 };
 
 class Graph{
-    int nodeNumber;
-    int** matrix;
-    vector<string> Nodes;
-    vector<Edge> edges;
+private:
+    Node** adj;
+    int nodes;
+    bool direction; // 0->undirected, 1->directed
+    string* cityNames;
 public:
-    Graph(int nodeNumber):nodeNumber(nodeNumber){
-        matrix = new int*[nodeNumber];
-        for(int i=0; i<nodeNumber; i++){
-            matrix[i] = new int[nodeNumber];
-            for(int j=0; j<nodeNumber; j++){
-                matrix[i][j] = INT_MAX;
-            }
-        }  
+    Graph(int nodes, bool direction=0):nodes(nodes),direction(direction){
+        adj = new Node*[nodes];
+        
+        for(int i=0; i<nodes; i++){
+            adj[i] = NULL;
+        }
+        
+        
+        cityNames = new string[nodes];
+        for(int i=0; i<nodes; i++){
+            cityNames[i] = to_string(i);
+        }
     }
-
-    ~Graph() {
-        for (int i = 0; i < nodeNumber; ++i)
-            delete[] matrix[i];
-        delete[] matrix;
+    
+    void addCities(string *cities){
+        for(int i=0; i<nodes; i++){
+            cityNames[i] = cities[i];
+        }
     }
-
-    void addNode(string node){
-        if(Nodes.size() < nodeNumber){
-            Nodes.push_back(node);
+    
+    void addEdge(int u, int v, int weight=1){
+        if(u<0 || v<0 || u >= nodes || v >= nodes){
+            cout<<"You Entered : "<<u<<" -> "<<v<<endl;
+            cout<<"Invalid Edge"<<endl;
             return;
         }
-        cout<<"Cannot add more nodes"<<endl;
-    }
-
-    int getIndex(string node){
-        for(int i=0; i<Nodes.size();i++){
-            if(Nodes[i]==node) return i;
+        
+        if(direction){     // directed
+            push_back(u,v,weight);    
         }
-        return -1;
-    }
-
-    string atIndex(int index){
-        if(index<nodeNumber && index<Nodes.size()){
-            return Nodes[index];
+        else{   // undirected
+            push_back(u,v,weight);
+            push_back(v,u,weight);
         }
-        return "";
+    
     }
-
-    void addEdge(string n1, string n2, int weight){
-        int index_1 = getIndex(n1);
-        int index_2 = getIndex(n2);
-        if(index_1 != -1 && index_2 != -1){
-            matrix[index_1][index_2] = weight;
-            matrix[index_2][index_1] = weight;
-            edges.push_back(Edge(index_1,index_2,weight));
+    
+    void push_back(int u, int v, int weight){
+        if(adj[u]==NULL){
+            adj[u] = new Node(v,weight);
+            return;
         }
+        Node* newNode = new Node(v,weight);
+        newNode->next = adj[u];
+        adj[u] = newNode;
     }
-
-    void displayMatrix(){
-        for(int i=0; i<nodeNumber; i++){
-            cout<<atIndex(i)<<" : ";
-            for(int j=0; j<nodeNumber; j++){
-                if(matrix[i][j] != INT_MAX){
-                    cout<<atIndex(j)<<" ";
-                }
+    
+    void print(Node** adj){
+        for(int i=0; i<nodes; i++){
+            cout<<cityNames[i]<<" : ";
+            Node* curr = adj[i];
+            while(curr){
+                cout<<cityNames[curr->vertex]<<" ("<<curr->weight<<"), ";
+                curr = curr->next;
             }
             cout<<endl;
         }
-    }   
-
-    bool isPresent(vector<int>&visited, Edge e){
-        bool condition1 = false;
-        bool condition2 = false;
-        for(int i=0; i<visited.size(); i++){
-            if(visited[i] == e.i) condition1 = true;
-            if(visited[i] == e.j) condition2 = true;
-        }
-
-        if(condition1&&condition2) return true;
-
-        if(!condition1){
-            visited.push_back(e.i);
-        }
-        if(!condition2){
-            visited.push_back(e.j);
-        }
-
-        return false;
     }
-
-    int kruskal(){
-        Edge::sortEdges(edges);
+    
+    Node** getAdj(){
+        return adj;
+    }
+    
+    void prims(int start=0){
+        int *key = new int[nodes];
+        bool *visited = new bool[nodes];
+        int *parent = new int[nodes];
         
-        vector<int> visited;
-        int totalWeight = 0;
-
-        for(int i=0; i<edges.size(); i++){
-            if(!isPresent(visited,edges[i])){
-                edges[i].print();
-                totalWeight += edges[i].weight;
-            }
+        for (int i = 0; i < nodes; i++) {
+            key[i] = INT_MAX;
+            visited[i] = false;
+            parent[i] = -1;
         }
-
-        return totalWeight;
-    }
-
-    int prims(){
+        
+        key[start] = 0;
+        parent[start] = -1;
+        
         int totalWeight = 0;
-
-        vector<int> key(Nodes.size(),INT_MAX);
-        vector<bool> mst(Nodes.size(),false);
-        vector<int> parent(Nodes.size(),-1);
-
-        key[0] = 0;
-        parent[0] = -1;
-
-        for(int i=0; i<Nodes.size(); i++){
-            int mini = INT_MAX;
-            int u;
-            for(int v=0; v<Nodes.size(); v++){
-                if(mst[v]==false && key[v]<mini){
-                    u = v;
-                    mini = key[v];
+        
+        for(int i=0; i<nodes; i++){
+            int min = INT_MAX;
+            int minVertex = -1;
+            for(int j=0; j<nodes; j++){
+                if(key[j]<min&&visited[j]==false){
+                    min = key[j];
+                    minVertex = j;
                 }
             }
-            mst[u] = true;
-            for(int i=0; i<Nodes.size(); i++){
-                if(matrix[u][i]!=INT_MAX&&mst[i]==false&&matrix[u][i]<key[i]){
-                    parent[i] = u;
-                    key[i] = matrix[u][i];
+            visited[minVertex] = true;
+            totalWeight += min;
+            Node* curr = adj[minVertex];
+            while(curr){
+                if(visited[curr->vertex]==false&&curr->weight < key[curr->vertex]){
+                    key[curr->vertex] = curr->weight;
+                    parent[curr->vertex] = minVertex;
                 }
+                curr = curr->next;
             }
         }
-
-        for(int i=0; i<Nodes.size(); i++){
+        
+        cout<<"MST Edges"<<endl;
+        
+        for(int i=0; i<nodes; i++){
             if(parent[i]==-1) continue;
-            totalWeight += matrix[parent[i]][i];
+            
+            cout<<cityNames[parent[i]]<<" -- "<<cityNames[i];
+            cout<<" ("<<key[i]<<") "<<endl;
+                
         }
-
-        return totalWeight;
+        
+        cout<<"Total Weight : "<<totalWeight<<endl;
     }
-
     
 };
 
 
 int main(){
+    Graph G(9);
+    
+    string cities[] = {"Pune","Mumbai","Nashik","Thane","Latur","Kolhapur","Solapur","Sangli","Ratnagiri"};
+    
+    G.addCities(cities);
+    
+    // Note: The graph vertex maps to the index of the cities in array
+    
+    G.addEdge(0,1,4);
+    G.addEdge(0,7,8);
+    G.addEdge(1,7,11);
+    G.addEdge(1,2,8);
+    G.addEdge(2,3,7);
+    G.addEdge(2,8,2);
+    G.addEdge(2,5,4);
+    G.addEdge(3,5,14);
+    G.addEdge(3,4,9);
+    G.addEdge(4,5,10);
+    G.addEdge(5,6,2);
+    G.addEdge(6,8,6);
+    G.addEdge(6,7,1);
+    G.addEdge(7,8,7);
 
-    Graph g(9);
-    g.addNode("A");     // 0  
-    g.addNode("B");     // 1
-    g.addNode("C");     // 2
-    g.addNode("D");     // 3  
-    g.addNode("E");     // 4
-    g.addNode("F");     // 5
-    g.addNode("G");     // 6
-    g.addNode("H");     // 7
-    g.addNode("I");     // 8
-
-
-
-    g.addEdge("A","B",4);
-    g.addEdge("A","H",8);
-    g.addEdge("B","H",11);
-    g.addEdge("B","C",8);
-    g.addEdge("C","D",7);
-    g.addEdge("C","F",4);
-    g.addEdge("C","I",2);
-    g.addEdge("D","E",9);
-    g.addEdge("D","F",14);
-    g.addEdge("E","F",10);
-    g.addEdge("F","G",2);
-    g.addEdge("G","I",6);
-    g.addEdge("G","H",1);
-    g.addEdge("H","I",7);
-
-
-    g.displayMatrix();
-
-    cout<<"Total Cost : "<<g.kruskal()<<endl;
-    cout<<"Total Cost : "<<g.prims()<<endl;
-
-
+    G.print(G.getAdj());
+    
+    G.prims(0);
 }
