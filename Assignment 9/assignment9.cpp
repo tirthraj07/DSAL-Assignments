@@ -4,7 +4,7 @@ Class: SE-02
 Roll No: 21242
 To write a program for implementing dictionary using Height balance tree.
 
-Do note: More optimisation can be done, especially with the getHeight function.
+Do note: More optimisation can be done, especially with the getHeight function. But I am really tired. :)
 */
 
 #include <iostream>
