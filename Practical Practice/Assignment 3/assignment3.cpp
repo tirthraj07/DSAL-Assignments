@@ -45,7 +45,7 @@ public:
 
 /*
 You'll see later why we are making this class
-basically it is for optimisationa and readablilty
+basically it is for optimizations and readability
 in the future, we when we want to search for a node, we will require its parent for say deletion purposes, then this data structure will give us both at once
 */
 class Pair{
@@ -134,6 +134,7 @@ private:
     }
     
     // It is similar to insertion, but if we encounter thread while traversing, we return NULL, NULL which means that element does not exists
+    // It will return the parent and the actual node in the Pair. 
     
     Pair search(int data){
         if(header->lthread){
@@ -162,6 +163,9 @@ public:
     
     void insert(int data){
         Node* newNode = new Node(data);
+
+        // For the first node only
+
         if(header->lthread){
             insertAtLeft(header, newNode);
             return;
