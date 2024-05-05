@@ -20,6 +20,7 @@ Use Sequential File to maintain the data.
 
 #include <iostream>
 #include <cstring>
+#include <string>
 #include <fstream>
 using namespace std;
 
@@ -272,16 +273,60 @@ public:
         file.close();
     }
 
-    Student query(int roll){
+    void displayStudent(int roll){
         streampos pos = getStudentPosition(roll);
         if(pos == fstream::pos_type(-1)){
             cout<<"Couldn't find the student"<<endl;
-            return Student();
+            return;
         }
-
-        return retrieveObject(pos);
-
+        cout<<"Student Found!"<<endl;
+        retrieveObject(pos).display();
+        return;
     }
+
+    void deleteStudent(int roll){
+        string tempFileName = "temp" + fileName;
+        fstream file(fileName, ios::binary | ios::in);
+        fstream tempfile(tempFileName, ios::binary | ios::out);
+        if(!file || !tempfile){
+            cout<<"Error while opening the file"<<endl;
+            return;
+        }
+        size_t objSize = sizeof(Student);
+        char* buffer = new char[objSize];
+        Student obj;
+        while(file.read(buffer,objSize)){
+            deserialize(obj,buffer);
+            if(obj.getRoll()==roll){
+                continue;
+            }
+            tempfile.write(buffer,objSize);
+        }
+        tempfile.close();
+        file.close();
+        delete[] buffer;
+        remove(fileName.c_str());
+        rename(tempFileName.c_str(), fileName.c_str());
+    }
+
+    void displayListOfStudents(){
+        cout<<endl<<"----------Displaying List of Students in the Records file----------"<<endl;
+        fstream file(fileName, ios::binary | ios::in);
+        if(!file){
+            cout<<"Error while opening the file"<<endl;
+            return;
+        }
+        char* buffer = new char[sizeof(Student)];
+        Student obj;
+        while(file.read(buffer,sizeof(Student))){
+            deserialize(obj, buffer);
+            obj.display();
+        }
+        cout << "---------- Finished reading students from file ----------" << endl << endl;
+        cout.flush(); 
+        file.close();
+        delete[] buffer;
+    }       
 
 };
 
@@ -290,10 +335,10 @@ public:
 int main(){
     FileClass f;
     Student s;
-    char name[] = "Vardhan Dongre";
-    char address[] = "Somewhere in sahakar nagar";
-    int roll = 21300;
-    int division = 3;
+    char name[] = "abcd";
+    char address[] = "xyz, PUNE";
+    int roll = 21200;
+    int division = 2;
 
     s.setName(name);
     s.setAddress(address);
@@ -302,9 +347,16 @@ int main(){
 
     // f.insert(s);
 
-    Student obj = f.query(21230);
-    obj.display();
 
+    f.displayListOfStudents();
+
+    f.displayStudent(21200);
+
+    f.deleteStudent(21200);
+
+    f.displayStudent(21200);
+
+    f.displayListOfStudents();
 
 }
 
