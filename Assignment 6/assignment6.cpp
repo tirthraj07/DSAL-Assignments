@@ -7,7 +7,9 @@ Represent a given graph using adjacency list to perform DFS and BFS.
 #include <iostream>
 #include <limits.h>
 #include <queue>
+#include <cstring>
 #include <stack>
+#include <vector>
 using namespace std;
 
 /*
@@ -40,7 +42,7 @@ public:
     Graph(int nodes = 0, bool direction = 0):nodes(nodes), direction(direction){
 
         // Initializing the adjacency list
-
+        adj = new Node*[nodes];
         for(int i=0; i<nodes; i++){
             adj[i] = NULL;
         }
@@ -130,6 +132,7 @@ public:
             
         }
         cout<<endl;
+        delete[] visited;
     }
 
     void dfs(int start=0){
@@ -143,23 +146,23 @@ public:
         
         stack<int> st;
         st.push(start);
-        visited[start] = true;
+        // visited[start] = true;
         
         while(!st.empty()){
             int vertex = st.top();
             st.pop();
             
-            // if(vertex[visited]==false){
-            cout<<vertex<<" ";
-                // visited[vertex] = true;
-            // }
+            if(vertex[visited]==false){
+                cout<<vertex<<" ";
+                visited[vertex] = true;
+            }
             
             Node* curr = adj[vertex];
             
             while(curr){
                 if(visited[curr->vertex]==false){
                     st.push(curr->vertex);
-                    visited[curr->vertex] = true;
+                    // visited[curr->vertex] = true;
                 }
                 
                 curr = curr->next;
@@ -168,8 +171,28 @@ public:
         }
         
         cout<<endl;
+        // delete[] visited;
         
         
+    }
+
+    void dfsRec(int src, vector<bool> &visited){
+        visited[src] = true;
+        cout<< src <<" ";
+
+        Node* curr = adj[src];
+        while(curr){
+            if(!visited[curr->vertex]){
+                dfsRec(curr->vertex, visited);
+                visited[curr->vertex] = true;
+            }
+            curr = curr->next;
+        }
+    }
+    
+    void dfsHelper(){
+        vector<bool> visit(nodes, false);
+        dfsRec(0,visit);
     }
 
 };
@@ -192,5 +215,15 @@ int main(){
     G.print();
     G.bfs();
     G.dfs();
+    cout<<endl;
+    // G.dfsHelper();
     
+    const int nodes = 7;
+    vector<bool> visited(nodes, false);
+    for(int i=0; i<7; i++){
+        visited[i] = false;
+    }
+    G.dfsRec(0,visited);
+    
+
 }

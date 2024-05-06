@@ -323,7 +323,6 @@ public:
             obj.display();
         }
         cout << "---------- Finished reading students from file ----------" << endl << endl;
-        cout.flush(); 
         file.close();
         delete[] buffer;
     }       

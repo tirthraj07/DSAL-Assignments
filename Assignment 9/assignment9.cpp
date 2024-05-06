@@ -161,7 +161,7 @@ public:
 
     void preorder(Node* node){
         if(!node) return;
-        cout<<node->key<<" ";
+        cout<<node->key<<" ("<<node->bf<<") ";
         preorder(node->left);
         preorder(node->right);
     }
