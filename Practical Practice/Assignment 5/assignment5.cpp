@@ -158,7 +158,6 @@ public:
 
     }
 
-
     void displayTable(){
         for(int i=0; i<SIZE; i++){
             Node* curr = arr[i];
