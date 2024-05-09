@@ -68,7 +68,7 @@ private:
     }
 
 public:
-    FileClass(string fileName="records.bin"):fileName(fileName){}
+    FileClass(string fileName="records-practice.bin"):fileName(fileName){}
 
     void insert(Student s){
         // Instead of directly entering, you can also check that the roll number hasn't been entered before

@@ -1,285 +1,214 @@
 /*
-Implement all the functions of a dictionary (ADT) using open hashing technique: separate chaining using linked list Data: Set of
-(key, value) pairs, Keys are mapped to values, Keys must be comparable, and Keys must be unique. 
-Standard Operations: Insert (key, value), Find(key), Delete(key)
+Implement all the functions of a dictionary (ADT) using open hashing technique: separate 
+chaining using linked list Data: Set of (key, value) pairs, Keys are mapped to values, Keys 
+must be comparable, and Keys must be unique. Standard Operations: Insert (key, value), 
+Find(key), Delete(key). 
+
+Use hash function as H(x) = (3x+5) % 10
 */
-#include<iostream>
-#include<string>
-#include <limits>
+#include <iostream>
+#include <string>
 using namespace std;
-
-
-
 
 class Node{
 private:
-    string key, value;
-    Node* next;
+    string key;
+    string value;
+    Node* next;    
 public:
-    Node(string key, string value):key(key),value(value),next(nullptr){}
+    Node(string key="",string value="",Node* next=NULL):key(key),value(value),next(next){}
+    
+    friend ostream & operator << (ostream &out, const Node &node); 
     friend class HashTable;
 };
 
+// optional fancy shit 
+ostream & operator << (ostream &out, const Node &node){
+    out<<node.key<<" : "<<node.value;
+    return out;
+}
+
 class HashTable{
 private:
-    Node**arr;
-    int size;
+    Node** arr;
+    const int SIZE;
+
+    string toLowerString(string str){
+        string newStr = "";
+        for(int i=0; i<str.length(); i++){
+            char character = str[i];
+            newStr += tolower(character);
+        }
+        return newStr;
+    }
+
+    int calculateHash(string str){
+        int hash = 0;
+        for(int i=0; i<str.length(); i++){
+            char character = str[i];
+            hash += (int) character;
+        }
+        return hash;
+    }
+
+    int hashFunction(string str){
+        if(str=="") return -1;
+        int x = calculateHash(str);
+        // Given: hash function as H(x) = (3x+5) % 10
+        // Here i am assuming that mod 10 means mod SIZE as it wouldn't make any sense if we are creating a table of bigger or smaller size if we mod 10 by default.
+        // Also i am assuming that x is the factor by which we determine the key numerically. So it is upto our preference what we want x to be
+        return (3 * x + 5 )%SIZE;
+    }
+
 public:
-    HashTable():size(26){
-        arr = new Node*[size];
-        for(int i=0; i<size; i++){
-            arr[i] = nullptr;
+    HashTable(int SIZE=10):SIZE(SIZE){
+        arr = new Node*[SIZE];
+        for(int i=0; i<SIZE; i++){
+            arr[i] = NULL;
         }
     }
 
     void insert(string key, string value){
-        if(key==" "||key==""){
-            cout<<"Cannot enter empty key"<<endl;
-            return;
-        }
-        
+        key = toLowerString(key);
         Node* newNode = new Node(key, value);
-        char c = key[0];
-        int asciiVal = int(c);
-        int pos = -1;
-        if(asciiVal>=65&&asciiVal<=90){
-            pos = asciiVal-65;
-        }
-        else if(asciiVal>=97&&asciiVal<=122){
-            pos = asciiVal - 97;
-        }
-        else{
-            cout<<"String contains a non alpha character"<<endl;
+        int hashIndex = hashFunction(key);
+        if(hashIndex == -1){
+            cout<<"Invalid key. Please enter a valid key"<<endl;
             return;
         }
 
-        if(arr[pos]==nullptr){
-            arr[pos] = newNode;
-        }
-        else{
-            Node* curr = arr[pos];
-            while(curr!=nullptr){
-                if(curr->key==key){
-                    cout<<"Error: Key "<<key<<" inserted more than once!"<<endl;
-                    return;
-                }
-                curr = curr->next;
-            }
-            newNode->next = arr[pos];
-            arr[pos] = newNode;
-        }
-        cout<<"Key inserted successfully!"<<endl;
-    }
-
-    void search(string key){
-        if(key==" "||key==""){
-            cout<<"Cannot enter empty key"<<endl;
+        if(arr[hashIndex]==NULL){
+            arr[hashIndex] = newNode;
+            cout<<"Pair inserted successfully"<<endl;
             return;
         }
-        char c = key[0];
-        int asciiVal = int(c);
-        int pos = -1;
-        if(asciiVal>=65&&asciiVal<=90){
-            pos = asciiVal-65;
-        }
-        else if(asciiVal>=97&&asciiVal<=122){
-            pos = asciiVal - 97;
-        }
-        Node* curr = arr[pos];
-        while(curr!=nullptr){
+
+        Node* curr = arr[hashIndex];
+        Node* prev = NULL;
+        while(curr){
+            prev = curr;
             if(curr->key==key){
-                cout<<"Key "<<key<<" Found!"<<endl;
-                cout<<"Value: "<<curr->value<<endl;
+                cout<<"Key already exists in the table"<<endl;
                 return;
             }
             curr = curr->next;
         }
-        cout<<"Key "<<key<<" Not Found!"<<endl;
+        prev->next = newNode;
+        cout<<"Pair inserted successfully"<<endl;
+    }
+
+    void search(string keyToBeSearched){
+        string key = toLowerString(keyToBeSearched);
+        int hashIndex = hashFunction(key);
+        if(hashIndex == -1){
+            cout<<"Invalid key entered. Please enter a valid key"<<endl;
+            return;
+        }
+        Node* curr = arr[hashIndex];
+        while(curr){
+            if(curr->key == key){
+                cout<<"Key found in the dictionary"<<endl;
+                cout<<*curr<<endl;
+                return;
+            }
+            curr = curr->next;
+        }
+
+        cout<<"Key "<<key<<" not in the hash table"<<endl;
         return;
     }
 
-    void deleteKey(string key){
-        if(key==" "||key==""){
-            cout<<"Cannot enter empty key"<<endl;
+    void deleteKey(string keyToBeSearched){
+        string key = toLowerString(keyToBeSearched);
+
+        int hashIndex = hashFunction(key);
+
+        if(hashIndex == -1){
+            cout<<"Invalid key entered. Please enter a valid key"<<endl;
             return;
         }
-        char c = key[0];
-        int asciiVal = int(c);
-        int pos = -1;
-        if(asciiVal>=65&&asciiVal<=90){
-            pos = asciiVal-65;
-        }
-        else if(asciiVal>=97&&asciiVal<=122){
-            pos = asciiVal - 97;
-        }
-        Node* prev = nullptr;
-        Node* curr = arr[pos];
-        if(curr==nullptr){
-            cout<<"Key Not Found!"<<endl;
+
+        if(arr[hashIndex]==NULL){
+            cout<<"Cannot find the key to delete in table"<<endl;
             return;
         }
-        else if(curr->key==key){
-            arr[pos] = curr->next;
-            cout<<"Key Deleted Successfully!"<<endl;
+        
+        if(arr[hashIndex] && arr[hashIndex]->key == key){
+            arr[hashIndex] = arr[hashIndex]->next;
+            cout<<"Key deleted successfully"<<endl;
             return;
         }
-        else{
-            while(curr!=nullptr&&curr->key!=key){
-                prev = curr;
+        
+        
+        Node* prev = arr[hashIndex];
+        Node* curr = prev->next;
+        while(curr){
+            if(curr->key==key){
+                prev->next = curr->next;
+                cout<<"Key deleted successfully"<<endl;
+                return;
+            }
+
+            prev = curr;
+            curr = curr->next;
+        }        
+
+        cout<<"Cannot find the key to delete in table"<<endl;
+        return;
+
+    }
+
+    void displayTable(){
+        for(int i=0; i<SIZE; i++){
+            Node* curr = arr[i];
+            cout<<i<<" : "<<endl;
+            while(curr){
+                cout<<*curr<<endl;
                 curr = curr->next;
             }
-            if(curr==nullptr){
-                cout<<"Key Not Found!"<<endl;
-                return;
-            }
-            prev->next = curr->next;
-            delete curr;
-            cout<<"Key Deleted Successfully!"<<endl;
+            cout<<"----------x----------"<<endl;
         }
-
-    }
-
-
-    void viewTable(){
-        Node* curr = nullptr;
-        cout<<"Index, key:value"<<endl;
-        for(int i=0; i<size; i++){
-            curr = arr[i];
-            cout<<i<<" : "<<endl;
-            while(curr!=nullptr){
-                cout<<curr->key<<" : "<<curr->value<< ", "<<endl;
-                curr=curr->next;
-            }
-            cout<<endl;
-        }
-        cout<<endl;
     }
 
 };
 
-class Menu{
-private:
-    HashTable* table;
-    int choice;
-public:
-    Menu(){
-        table = nullptr;
-        askChoice();
-        initiateChoice();
-    }
-
-    void askChoice(){
-        cout<<"What do you want to do?"<<endl;
-        cout<<"1. Create an empty hash table"<<endl;
-        cout<<"2. Insert a record in hash table"<<endl;
-        cout<<"3. Search a record in hash table"<<endl;
-        cout<<"4. Delete a record in hash table"<<endl;
-        cout<<"5. View table"<<endl;
-        cout<<"6. Exit"<<endl;
-        cout<<">> ";
-        cin>>choice;
-        cout<<endl;
-    }
-
-    void initiateChoice(){
-        bool ch;
-        string key,value;
-        switch(choice){
-            case 1:
-                if(table!=nullptr){
-                    cout<<"Do You want to override the exisiting table?"<<endl;
-                    cin>>ch;
-                    if(!ch){
-                        cout<<"No changes applied!"<<endl;
-                        break;
-                    }
-                }
-                table = new HashTable;
-                cout<<"Empty hash table created successfully!"<<endl;
-                break;
-            case 2:
-                if(table==nullptr){
-                    cout<<"Create an Empty Table first!"<<endl;
-                    break;
-                }
-                cout<<"Enter Key to be inserted"<<endl;
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                getline(cin,key);
-                cout<<"Enter Value to be inserted"<<endl;
-                getline(cin,value);
-                
-                table->insert(key,value);
-                break;
-            case 3:
-                if(table==nullptr){
-                    cout<<"Create an Empty Table first!"<<endl;
-                    break;
-                }
-                cout<<"Enter Key to be Searched"<<endl;
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                getline(cin,key);
-                table->search(key);
-                break;
-            case 4:
-                if(table==nullptr){
-                    cout<<"Create an Empty Table first!"<<endl;
-                    break;
-                }
-                cout<<"Enter Key to be Deleted"<<endl;
-                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                getline(cin,key);
-                table->deleteKey(key);
-                break;
-            case 5:
-                if(table==nullptr){
-                    cout<<"Create an Empty Table first!"<<endl;
-                    break;
-                }
-                table->viewTable();
-                break;
-            case 6:
-                cout<<"Thank You for using"<<endl;
-                return;
-                break;
-            default:
-                cout<<"Invalid Operation"<<endl;
-        }
-        retry();   
-
-    }
-
-    void retry(){
-        askChoice();
-        initiateChoice();
-    }
-};
 
 
 int main(){
-    Menu m;
+    // Make it Menu driven the practical exam.
 
-    // HashTable table;
-    // table.viewTable();
-    // table.insert("Apple","a fruit");
-    // table.insert("Ball", "a solid or hollow spherical or egg-shaped object that is kicked, thrown, or hit in a game.");
-    // table.insert("Cat","an animal");
-    // table.insert("Dog","an animal");
-    // table.insert("apple","a fruit");
-    // table.insert("ball", "a solid or hollow spherical or egg-shaped object that is kicked, thrown, or hit in a game.");
-    // table.insert("cat","an animal");
-    // table.insert("dog","an animal");
-    // table.insert("Apple","a fruit");
-    // table.viewTable();
-    // table.search("apple");
-    // table.search("Apple");
-    // table.search("Cat");
-    // table.search("dog");
-    // table.search("zebra");
-    // table.deleteKey("apple");
-    // table.deleteKey("Cat");
-    // table.deleteKey("dog");
-    // table.deleteKey("ball");
-    // table.viewTable();
+    HashTable table;
+    // Make the code menu driven. I am too tired.
 
-    return 0;
+    string key, value;
+    do{
+        cout<<"Enter key to be entered (-1 to quit) : ";
+        getline(cin, key);
+        if(key == "-1") break;
+        cout<<"Enter value to be entered : ";
+        getline(cin, value);
+        table.insert(key, value);
+    }while(key != "-1");
+
+    table.displayTable();   
+
+    cout<<"Which key do you want to search?"<<endl;     // try inserting key that exists
+    getline(cin, key);
+    table.search(key);
+
+    cout<<"Which key do you want to search?"<<endl;     // try inserting key that doesn't exist
+    getline(cin, key);
+    table.search(key);
+
+    cout<<"Which key do you want to delete?"<<endl;     // try deleting key that exists
+    getline(cin, key);
+    table.deleteKey(key);
+
+    cout<<"Which key do you want to delete?"<<endl;     // try deleting key that doesn't exist
+    getline(cin, key);
+    table.deleteKey(key);
+
+    table.displayTable();
+
+
 }

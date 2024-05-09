@@ -11,6 +11,12 @@ College: PICT, Pune
 4. <a href="#assignment-4">Hash Table Implementation</a>
 5. <a href="#assignment-5">Dictionary ADT Implementation using Open Hashing</a>
 6. <a href="#assignment-6">Graph using Adjacency List</a>
+7. <a href="#assignment-7">Minimum Spanning Tree</a>
+8. <a href="#assignment-8">Optimal Binary Search Tree</a>
+9. <a href="#assignment-9">AVL Tree</a>
+10. <a href="#assignment-10">Heap Data Structure and Heap Sort</a>
+11. <a href="#assignment-11">Sequential File</a>
+12. <a href="#assignment-12">Direct Access File</a>
 
 ---
 
@@ -94,3 +100,88 @@ Represent a given graph using adjacency list to perform DFS and BFS.
 Use the map of the area around the college as the graph. Identify the
 prominent landmarks as nodes and perform DFS and BFS on that.
 ```
+---
+
+## <span id="assignment-7">Assignment 7</span> - Minimum Spanning Tree  
+
+### Problem Statement
+  
+```
+To write a program for Graph creation and find its minimum cost using
+Prim’s or Kruskal’s algorithm.
+
+You have a business with several offices; you want to lease phone lines
+to connect them up with each other and the phone company charges
+different amounts of money to connect different pairs of cities. 
+You want a set of lines that connects all your offices with a minimum total
+cost. Solve the problem by suggesting appropriate data structures.
+```
+---
+
+## <span id="assignment-8">Assignment 8</span> - Optimal Binary Search Tree  
+
+### Problem Statement
+  
+```
+Given sequence k = k1 <k2 < … <kn of n sorted keys, with a successful and unsuccessful 
+search probability pi and qi for each key ki. Build the Binary search tree that has the least 
+search cost given the access probability for each key
+```
+---
+
+## <span id="assignment-9">Assignment 9</span> - AVL Tree  
+
+### Problem Statement
+  
+```
+A Dictionary stores keywords and its meanings. Provide facility for adding new keywords. 
+Provide facility to display whole data sorted in ascending/ Descending order. Also find 
+how many maximum comparisons may require for finding any keyword. 
+
+Use Height balanced (AVL) tree.
+```
+---
+
+## <span id="assignment-10">Assignment 10</span> - Heap Data Structure and Heap Sort
+
+### Problem Statement
+  
+```
+Read the marks obtained by students of second year in an online examination of particular 
+subject. Find out minimum/maximum marks obtained in that subject. Use heap data structure. 
+Analyze the algorithm.
+
+OR
+
+Implement the Heap sort algorithm for demonstrating heap data structure with modularity 
+of programming language (consider integer data)
+```
+---
+
+## <span id="assignment-11">Assignment 11</span> - Sequential File  
+
+### Problem Statement
+  
+```
+Department maintains a student information. The file contains roll
+number, name, division and address. Allow user to add, delete
+information of student. Display information of particular student. If
+record of student does not exist an appropriate message is displayed. If
+it is, then the system displays the student details. 
+
+Use Sequential File to maintain the data.
+```
+---
+
+## <span id="assignment-12">Assignment 12</span> - Direct Access File  
+
+### Problem Statement
+  
+```
+Implementation of a direct access file -Insertion and deletion of a
+record from a Direct Access File.
+```
+---
+
+All the assignments in this repository are implemented by me. If there are any mistakes/suggestions do let me know.  
+Thanks!

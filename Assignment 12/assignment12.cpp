@@ -174,8 +174,8 @@ public:
             BUT even if you use seekp to change the pointer location, since you opened the file in APPEND mode, it will always write the new content at the end of the file
             THIS means that it will not OVERWRITE the CONTENTS even though you moved the pointer to where you want to overwrite
 
-            In ios::app mode, seekg won't allow you to overwrite existing data because the file pointer is always positioned at the end of the file before any write operation. 
-            Therefore, any attempt to use seekg followed by a write operation will result in the data being appended to the end of the file, rather than overwriting existing content.
+            In ios::app mode, seekp won't allow you to overwrite existing data because the file pointer is always positioned at the end of the file before any write operation. 
+            Therefore, any attempt to use seekp followed by a write operation will result in the data being appended to the end of the file, rather than overwriting existing content.
 
             3. use of ios::in | ios::out -> CORRECT
 
@@ -184,6 +184,8 @@ public:
             You are explicitly indicating that you want to handle both reading and writing operations, and you control the file pointer using seekp() and seekg() to write at specific positions within the file.
             This mode is suitable for scenarios where you need to read from and write to arbitrary positions within the file without truncating its contents.
         
+            tl;dr use ios::in | ios:out mode
+
         */
 
 

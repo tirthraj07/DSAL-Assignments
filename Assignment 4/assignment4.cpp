@@ -1,210 +1,329 @@
 /*
-Consider telephone book database of N clients. Make use of a hash
-table implementation to quickly look up client’s telephone number.
-Make use of two collision handling techniques and compare them using
-number of comparisons required to find a set of telephone numbers
-(Note: Use linear probing with replacement and without replacement)
+Consider telephone book database of N clients. Make use of a hash table implementation 
+to quickly look up client‘s telephone number. Make use of two collision handling 
+techniques and compare them using number of comparisons required to find a set of 
+telephone numbers (Note: Use linear probing with replacement and without replacement). 
+Perform following operations 
+Use Hash function as H(x) = (3*x + 5)%10
+1. Insert
+2. Delete
+3. Search
+4. Display
 */
 
-#include <iostream>
-#include <string>
+// This is a sightly complicated implementation of hash table which i don't think they expect in practicals
+// but implementing it just for the sake of it
+
+// My implementation assumes that the name (aka key) is unique. you cannot have the same name (even though u can).
+// My other implementation took phoneNo as the key as it is a unique characteristic
+// However, the problem statement clearly says that "quickly look up client‘s telephone number"
+// This means that the user will enter the clients name and get phone no. in return
+
+
+/*
+In this implementation, if we delete more than a certain threshold, then the table will rehash itself
+This is because:
+If you don't rehash after deletion and the table becomes densely populated with deleted slots, the performance of searching operations could degrade to O(n) because the linear probing sequence may have to traverse through many deleted slots before finding the desired element or an empty slot.
+BUT you don't necessarily need to rehash after every deletion
+you can set a threshold. In this implementation, if you delete the records HALF the size of table, the table will rehash all the entries
+
+This way, the time complexity of search is greatly optimized
+
+Also, in this implementation, i also added the feature that if you go beyond the pre defined size of the table, the table will double its size and rehash all the entires according to the new sized
+This is similar to how we implement vectors in c++
+
+*/
+
+
+#include<iostream>
+#include<string>
 using namespace std;
 
 class Record{
+private:
+    string name;
+    string phoneNo;
 public:
-    long int key;
-    string value;
-
-    Record():key(0),value(""){}
-    Record(long int key, string value):key(key), value(value){}
+    Record():name(""),phoneNo(""){};
+    Record(string name, string phoneNo):name(name),phoneNo(phoneNo){}
     friend class HashTable;
+    friend ostream& operator<< (ostream& out, const Record& rec);
 };
+
+ostream& operator << (ostream& out, const Record& rec){
+    out<<rec.name<<" : "<<rec.phoneNo;
+    return out;
+}
 
 
 class HashTable{
 private:
-    int size;
-    Record* table;
-    bool replacement; /* 0 -> without replacement and 1 -> with replacement */
+    Record* arr;
+    int SIZE;
+    bool replacement;       // 0 -> without replacement and 1 -> with replacement
+    int currentRecordCount;      // this is to keep track of the size
+    int deletedRecordCount;     // If the deleted count goes beyond a certain threshold, we should rehash the entire table
+    int thresholdForDeletion;
 
-public:
-    HashTable(int size, bool replacement=false):size(size),replacement(replacement){
-        table = new Record[size];
+    int calculateHash(string key){
+        int hash = 0;
+        for(int i=0; i<key.length(); i++){
+            char character = key[i];
+            int asciiVal = (int)character;
+            int weight = i+1;                   // OPTIONAL. Basically character * position of character (starting from 1). Thus abc and bca wont have the same hash
+            hash += asciiVal*weight;
+        }
+        return hash;
     }
 
-    int hashFunction(long int key){
-        return key%size;
+    bool isEmpty(Record rec){           // Here you should define how you would determine an empty record. Either by name or phone no.
+        if(rec.name == "") return true;
+        return false;
     }
 
-
-    bool isRecordEmpty(Record record){
-        return record.key==0&&record.value=="";
+    int hashFunction(string key){
+        // Use Hash function as H(x) = (3*x + 5)%10
+        int x = calculateHash(key);
+        return (3 * x + 5)%SIZE;
+    }
+    // Overloading for simplicity (This will be used for rehashing purposes)
+    int hashFunction(string key, int tableSize){
+        // Use Hash function as H(x) = (3*x + 5)%10
+        int x = calculateHash(key);
+        return (3 * x + 5)%tableSize;
     }
 
-    void insert(long int key, string value){
-        Record newRecord = Record(key,value);
-        int index = hashFunction(key);
-
-        if(isRecordEmpty(table[index])){
-            table[index] = newRecord;
-            return;
-        }
-        else if(table[index].key==key){
-            cout<<"Key "<< key << " has already been inserted"<<endl;
-            return;
-        }
-        else if(replacement==true&&hashFunction(table[index].key)!=index){
-            long int replacedKey = table[index].key;
-            string replacedValue = table[index].value;
-            table[index] = newRecord;
-            insert(replacedKey, replacedValue);
-            return;
-        }
+    void insertIntoArr(Record* &table, int tableSize ,Record rec){
+        int hashIndex = hashFunction(rec.name, tableSize);
         
-        for(int i=(index+1)%size; i<size && i!=index; i=(i+1)%size){
-            if(isRecordEmpty(table[i])){
-                table[i] = newRecord;
-                return;
-            }
-            else if(table[i].key==key){
-                cout<<"Key "<< key << " has already been inserted"<<endl;
+        if(isEmpty(table[hashIndex])){
+            table[hashIndex] = rec;
+            return;
+        }
+
+        // check this condition for replacement only
+        if(replacement && !isEmpty(table[hashIndex])){
+            string insertedRecordKey = table[hashIndex].name;
+            string insertedRecordValue = table[hashIndex].phoneNo;
+
+            int insertedRecordHashIndex = hashFunction(insertedRecordKey, tableSize);
+            // if the already inserted key does not belong there.
+            if(insertedRecordHashIndex != hashIndex){   
+                table[hashIndex] = rec;
+                // Reinsert the record into the hash table
+                insertIntoArr(table, tableSize,Record(insertedRecordKey, insertedRecordValue));
                 return;
             }
         }
 
-        cout<<"No Empty Space in the Table"<<endl;
+        int itr = hashIndex;
+        do{
+            if(isEmpty(table[itr])){
+                table[itr] = rec;
+                return;
+            }
+            // Use linear or quadratic or any other probing mechanism here
+            itr = (itr + 1)%tableSize;
+        }while(itr != hashIndex);
+        
+
+        // this will never be called as if we try to insert beyond the current size, the hash table will increase it's size automatically
+        cout<<"Table is full. Cannot insert the following record"<<endl;
+        cout<<rec<<endl;
         return;
-
     }
 
-    void printTable(){
-        cout<<"index  key  value"<<endl;
-        for(int i=0; i<size; i++){
-            cout<<i<<"   "<<table[i].key<<"   "<<table[i].value<<endl;
-        }
-        cout<<endl;
-    }
-
-    string search(long int key){
-        int index = hashFunction(key);
-        if(table[index].key == key){
-            cout<<"Key Found! Key:"<<key<<" : Value:"<<table[index].value<<endl;
-            return table[index].value;
-        }
-        
-        for(int i = (index+1)%size; i<size&&i!=index; i=(i+1)%size){
-            if(table[i].key==key){
-                cout<<"Key Found! Key:"<<key<<" : Value:"<<table[i].value<<endl;
-                return table[i].value;
+    void extendHashTable(){     // Basically Creating vector.
+        Record* newArr = new Record[2*SIZE];
+        // Copy all the records in the new table and rehashing them accordingly
+        for(int i=0; i<SIZE; i++){
+            if(!isEmpty(arr[i])){
+                insertIntoArr(newArr, 2*SIZE, arr[i]);
             }
         }
+        delete[] arr;
+        arr = newArr;
+        SIZE = 2*SIZE;
+        // Reset the deletedRecordCount as we have rehashed all the records in the table
+        deletedRecordCount = 0;
+        thresholdForDeletion = SIZE/2;      // since we modified the size, we need to reset the threshold too.
 
-        cout<<"Key Not Found"<<endl;
-        return "";
-
+        return;
     }
 
-
-};
-
-
-class Menu{
-private:
-    int choice;
-    HashTable* htableptr;
-public:
-    Menu(){
-        htableptr = nullptr;
-        askChoice();
-        initiateOperation();
-    }
-
-    void askChoice(){
-        cout<<"What do you want to do?"<<endl;
-        cout<<"1. Create Hash Table"<<endl;
-        cout<<"2. Enter Record in Table"<<endl;
-        cout<<"3. Search Record in Table"<<endl;
-        cout<<"4. Print Table"<<endl;
-        cout<<"5. Exit"<<endl;
-        cin>>choice;
-        cout<<endl;
-    }
-
-    void initiateOperation(){
-        bool ch;
-        int num;
-        long int key;
-        string value;
-
-        switch(choice){
-            case 1:
-                if(htableptr!=nullptr){
-                    cout<<"Do you want to replace the hash table?"<<endl;
-                    cin>>ch;
-                    if(!ch) break;
-                }
-                cout<<"How many total records?"<<endl;
-                cin>>num;
-                cout<<"Method? With Replacement or Without Replacement? (1/0)"<<endl;
-                cin>>ch;
-                htableptr = new HashTable(num,ch);
-                cout<<"Table Created Successfully!"<<endl;
-                break;
-            case 2:
-                if(htableptr==nullptr){
-                    cout<<"Create a Hash table first!"<<endl;
-                    break;
-                }
-                cout<<"Enter Key and value of the new Record"<<endl;
-                cin>>key;
-                cin>>value;
-                htableptr->insert(key,value);
-                cout<<endl;
-                break;
-            case 3:
-                if(htableptr==nullptr){
-                    cout<<"Create a Hash table first!"<<endl;
-                    break;
-                }
-                cout<<"Enter the key to be searched"<<endl;
-                cin>>key;
-                htableptr->search(key);
-                break;
-            case 4:
-                if(htableptr==nullptr){
-                    cout<<"Create a Hash table first!"<<endl;
-                    break;
-                }
-                htableptr->printTable();
-                break;
-            case 5:
-                cout<<"Thanks for using :)"<<endl;
-                return;
-                break;
-            default:
-                cout<<"Enter a valid choice!"<<endl;
+    void rehashTheEntireTable(){
+        // it is the same as extend but the size remains the same
+        Record* newArr = new Record[SIZE];
+        // Copy all the records in the new table and rehashing them accordingly
+        for(int i=0; i<SIZE; i++){
+            if(!isEmpty(arr[i])){
+                insertIntoArr(newArr, SIZE, arr[i]);
+            }
         }
-        retry();
+        delete[] arr;
+        arr = newArr;
+        SIZE = SIZE;
+        // Reset the deletedRecordCount as we have rehashed all the records in the table
+        deletedRecordCount = 0;
+        return;
     }
 
-    void retry(){
-        askChoice();
-        initiateOperation();
+    Record search(string key){
+        int hashIndex = hashFunction(key);
+        int itr = hashIndex;
+        do{
+            if(arr[itr].name == key){
+                return arr[itr];
+            }
+            // probe according to how you inserted into the table
+            itr = (itr + 1)%SIZE;
+        }while(itr!=hashIndex);
+        return Record();
     }
+
+
+public:
+    HashTable(int SIZE=10, bool replacement=0):SIZE(SIZE),replacement(replacement){
+        arr = new Record[SIZE];
+        currentRecordCount = 0;
+        deletedRecordCount = 0;
+        thresholdForDeletion = SIZE/2;          // Determine when you should rehash the entire table
+    }
+
+    void insert(string key, string phoneNo){
+        currentRecordCount++;
+        if(currentRecordCount >= SIZE){
+            cout<<"Extending the Table..."<<endl;
+            extendHashTable();
+        }
+        insertIntoArr(arr,SIZE,Record(key,phoneNo));
+    }
+
+    void searchRecord(string key){
+        Record rec = search(key);
+        if(isEmpty(rec)){
+            cout<<"--- Record "<< key <<" not found! ---"<<endl<<endl;
+            return;
+        }
+        cout<<"----- Record Found! -----"<<endl;
+        cout<<rec<<endl<<endl;
+    }
+    
+
+    void deleteRecord(string key){
+        Record rec = search(key);
+        if(isEmpty(rec)){
+            cout<<"Record does not exist!"<<endl;
+            return;
+        }
+        
+        if(deletedRecordCount >= thresholdForDeletion){
+            cout<<"Deletion threshold reached max limit! Rehashing the table for optimizations.. "<<endl;
+            rehashTheEntireTable();
+        }
+
+        // if exists
+        currentRecordCount--;
+        deletedRecordCount++;
+
+        int hashIndex = hashFunction(key);
+        int itr = hashIndex;
+        do{
+            if(arr[itr].name == key){
+                arr[itr] = Record();        // replace the object with dummy object
+                cout<<"---- Deleted Record "<< key <<" Successfully ----"<<endl<<endl;
+                return;
+            }
+
+            itr = (itr+1)%SIZE;
+        }while(itr != hashIndex);
+
+        // if this runs, there is an error as we have already verified that the record exists in the table using search Function
+        cout<<"Could not find the record"<<endl;
+        return;
+    }
+
+    void viewTable(){
+        cout<<endl<<"---------- Displaying Table ----------"<<endl;
+        for(int i=0; i<SIZE; i++){
+            cout<<"----- Position "<<i<<" -----"<<endl;
+            if(isEmpty(arr[i])){
+                cout<<"EMPTY"<<endl<<endl;
+                continue;
+            }
+            cout<<arr[i]<<endl;
+            cout<<"Ideal Index : "<<hashFunction(arr[i].name)<<endl<<endl;
+        }
+        cout<<endl<<"---------- END ----------"<<endl;
+    }
+
 
 };
-
 
 int main(){
-    Menu m;
+    // Make it menu driven in the practical exam. Check the other implementation for menu driven code
 
-    // Record arr[5] = {Record(1,"A"),Record(6,"B"),Record(3,"C"),Record(4,"D"),Record(7,"E")};
-    // HashTable table(5,1);
-    // for(int i=0; i<5; i++){
-    //     table.insert(arr[i].key, arr[i].value);
-    // }
-    // table.printTable();
+    HashTable table;
 
-    // cout<<table.search(6)<<endl;
+    table.viewTable();      // Empty table
+
+
+    table.insert("Tirthraj Mahajan","1234567890");
+    table.insert("Aditya Mulay","1111111111");
+    table.insert("Vardhan Dongre","2222222222");
+    table.insert("Ninad Palsule","3333333333");
+    table.insert("Arnav Vaidya","4444444444");
+    table.insert("Kedar Vartak","5555555555");
+    table.insert("Amey Kulkarni","6666666666");
+    table.insert("Shreyas Nagarkar","7777777777");
+    table.insert("Aditya Kulkarni", "8888888888");
+    table.viewTable();
+
+    table.deleteRecord("Tirthraj Mahajan");
+    table.deleteRecord("Aditya Mulay");
+    table.deleteRecord("Ninad Palsule");
+    table.deleteRecord("Amey Kulkarni");
+    table.deleteRecord("Shreyas Nagarkar"); 
+    table.deleteRecord("Aditya Kulkarni");  // this deletion should reach the max limit and you would see change in the indexing of the table
+
+    // You should see the following changes
+    /*
+        Kedar Vartak went to his ideal position
+        Vardhan Dongre went to his ideal position
+        Arnav Vaidya went to his ideal position
+
+    */
+    table.viewTable();
+
+    // Reinsert the deleted records to test extend table function
+    table.insert("Tirthraj Mahajan","1234567890");
+    table.insert("Aditya Mulay","111111111");
+    table.insert("Ninad Palsule","3333333333");
+    table.insert("Amey Kulkarni","6666666666");
+    table.insert("Shreyas Nagarkar","7777777777");
+
+    table.viewTable();
+
+    // This entry should automatically extend the table as SIZE(10) == entry no (10)
+    table.insert("Harsh B","9999999999");      
+    table.insert("Nidhish Kasbekar", "0000000000");
+
+
+    table.viewTable();
+
+    table.searchRecord("Arnav Vaidya");
+    table.deleteRecord("Arnav Vaidya");
+    table.searchRecord("Arnav Vaidya");     // test record search after deletion
+
+    table.searchRecord("Vedang Urade");     // test for record that doesn't exist
+
+    table.viewTable();
+
+    // All tests passed successfully!
 
 }
+
+
+
+
+

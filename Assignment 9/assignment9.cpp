@@ -1,191 +1,194 @@
 /*
-Name : Tirthraj Mahajan
+Name: Tirthraj Mahajan
 Class: SE-02
-Roll No: 21242
-To write a program for implementing dictionary using Height balance tree.
+Roll: 21242
 
-Do note: More optimisation can be done, especially with the getHeight function. But I am really tired. :)
+A Dictionary stores keywords and its meanings. Provide facility for adding new keywords. 
+Provide facility to display whole data sorted in ascending/ Descending order. Also find 
+how many maximum comparisons may require for finding any keyword. 
+
+Use Height balanced (AVL) tree.
 */
 
-#include <iostream>
+#include<iostream>
 using namespace std;
 
 class Node{
 private:
-    int key;
-    int height;
-    int bf;
+    string data;
+    string value;
     Node* left;
     Node* right;
+    int height;
 public:
-    Node(int key, int height=1, int bf=0, Node*left=NULL, Node*right=NULL):key(key),height(height),bf(bf),left(left),right(right){}
+    Node(){};
+    Node(string data, string value):data(data),value(value){
+        left = NULL;
+        right = NULL;
+        height = 1;
+    }
     friend class AVLTree;
 };
 
 class AVLTree{
-private: 
+private:
     Node* root;
-
-public:
-    AVLTree():root(nullptr){}
-
-    void insert(int key){
-        root = insertUtil(root,key);
-    }
-
-    int getHeight(Node* node){
-        if(!node) return 0;
-        return max(getHeight(node->left), getHeight(node->right)) + 1;
-    }
-
-    int getBF(Node* node){
-        if(!node) return 0;
-        int left_height =  getHeight(node->left);
-        int right_height = getHeight(node->right);
-        return left_height-right_height;
-    }
-
-    // We will traverse postorder and then update the tree
-    void updateTree(Node* node){
-        if(!node) return;
-        updateTree(node->left);
-        updateTree(node->right);
-        node->height = max(getHeight(node->left),getHeight(node->right))+1;
-        node->bf = getBF(node);
-
-    }   
-
-    Node* getRoot(){
-        return root;
-    }
-
-    Node* insertUtil(Node* node, int key){
-        if(!node) return new Node(key);
-
-        if(key < node->key){
-            node->left = insertUtil(node->left, key);
-        }
-        else if(key > node->key){
-            node->right = insertUtil(node->right, key);
-        }
-        else{
-            return node;
-        }
-        
-        
-
-        node->height = max(getHeight(node->left),getHeight(node->right))+1;
-        node->bf = getHeight(node->left)-getHeight(node->right);
-
-        return balance(node);
-
-    }
-
-    Node* balance(Node* node){
-        // Right Heavy
-        if (node->bf < -1){
-            // Right - Left Case
-            if(getBF(node->right)>0){
-                node->right = rotateRight(node->right);
-            }
-            // Right - Right Case            
-            return rotateLeft(node);
-        }
-
-        // Left Heavy
-        else if (node->bf > 1){
-
-            // Left - Right Case
-            if(getBF(node->left)<0){
-                node->left = rotateLeft(node->left);
-            }
-            // Left - Left Case    
-            return rotateRight(node);
-
-        }
-        return node;
-
-    }
-
-/*
-    A                       B
-        B       -->     A       D
-    C       D             C
-
-*/
-
-    Node* rotateLeft(Node* A){
-        Node* B = A->right;
-        Node* C = B->left;
-
-        B->left = A;
-        A->right = C;
-
-        A->height = getHeight(A);
-        B->height = getHeight(B);
-
-        A->bf = getBF(A);
-        B->bf = getBF(B);
-
-        return B;
-    }
-
-/*
-            A                       B
-        B           -->         D       A
-    D       C                         C 
-*/
 
     Node* rotateRight(Node* A){
         Node* B = A->left;
         Node* C = B->right;
 
-        B->right = A;
         A->left = C;
+        B->right = A;
 
-        A->height = getHeight(A);
-        B->height = getHeight(B);    
+        A->height = 1 + max(getHeight(A->left),getHeight(A->right));
+        B->height = 1 + max(getHeight(B->left),getHeight(B->right));
+        
+        return B;
+    }
 
-        A->bf = getBF(A);
-        B->bf = getBF(B);
+    Node* rotateLeft(Node* A){
+        Node* B = A->right;
+        Node* C = B->left;
+
+        A->right = C;
+        B->left = A;
+
+        A->height = 1 + max(getHeight(A->left),getHeight(A->right));
+        B->height = 1 + max(getHeight(B->left),getHeight(B->right));
 
         return B;
+    }
+
+    int getHeight(Node* node){
+        if(!node) return 0;
+        return node->height;
+    }
+
+    int getBalanceFactor(Node* node){
+        if(!node) return 0;
+        return getHeight(node->left) - getHeight(node->right);
+    }
+
+
+    Node* insert(Node* node, string data, string value){
+        if(!node) return new Node(data, value);
+
+        if(node->data > data){
+            node->left = insert(node->left, data, value);
+        }
+        else if(node->data < data){
+            node->right = insert(node->right, data, value);
+        }
+        else{
+            return node;
+        }
+
+        node->height = 1 + max(getHeight(node->left),getHeight(node->right));
+
+        int bf = getBalanceFactor(node);
+
+        if(bf > 1 && data < node->left->data){
+            cout<<"Performing LL Rotation"<<endl;
+            return rotateRight(node);
+        }
+        else if(bf > 1 && data > node->left->data){
+            cout<<"Performing LR Rotation"<<endl;
+            node->left = rotateLeft(node->left);
+            return rotateRight(node);
+        }
+        else if(bf < -1 && data > node->right->data){
+            cout<<"Performing RR Rotation"<<endl;
+            return rotateLeft(node);
+        }
+        else if(bf < -1 && data < node->right->data){
+            cout<<"Performing RL Rotation"<<endl;
+            node->right = rotateRight(node->right);
+            return rotateLeft(node);
+        }
+
+        return node;
     }
 
     void inorder(Node* node){
         if(!node) return;
         inorder(node->left);
-        cout<<node->key<<" ";
+        cout<<node->data<<" : "<<node->value<<endl;
         inorder(node->right);
     }
 
     void preorder(Node* node){
         if(!node) return;
-        cout<<node->key<<" ("<<node->bf<<") ";
+        cout<<node->data<<" : "<<node->value<<endl;
         preorder(node->left);
         preorder(node->right);
     }
 
+public:
+    AVLTree():root(NULL){}
+
+    void insert(string data, string value){
+        root = insert(root, data, value);
+    }
+    
+    void inorder(){
+        cout<<"==== Inorder ===="<<endl;
+        inorder(root);
+        cout<<endl;
+    }
+
+    void preorder(){
+        cout<<"==== Preorder ===="<<endl;
+        preorder(root);
+        cout<<endl;
+    }
+
+    void search(string data){
+        Node* curr = root;
+        while(curr){
+            if(curr->data == data){
+                cout<<"Element Found!"<<endl;
+                cout<<curr->data<<" : "<<curr->value<<endl;
+                return;
+            }
+            else if(curr->data > data){
+                curr = curr->left;
+            }
+            else{
+                curr = curr->right;
+            }
+        }
+        cout<<"Element not in the dictionary"<<endl;
+        return;
+    }
+
+
 };
 
 
-
 int main(){
-    // Inserting in ascending order to generate skewed BST
+    // Make it menu driven in the practical exam
 
     AVLTree tree;
-    tree.insert(12);
-    tree.insert(8);
-    tree.insert(5);
-    tree.insert(4);
-    tree.insert(11);
-    tree.insert(18);
-    tree.insert(17);
+    // insert some actual word-meanings. These were for testing purposes only
+    tree.insert("a","apple");
+    tree.insert("b","ball");
+    tree.insert("c","cat");
+    tree.insert("d","dog");
+    tree.insert("e","elephant");
+    tree.insert("f","frog");
+    tree.insert("g","girl");
+    tree.insert("h","horse");
+    tree.insert("i","india");
+    tree.insert("j","joker");
+    tree.insert("k","knife");
+    tree.insert("l","lamp");
+    tree.insert("m","mango");
+    tree.insert("n","noon");
+    tree.insert("o","orange");
 
-    tree.inorder(tree.getRoot());
-    cout<<endl;
-    tree.preorder(tree.getRoot());
-    cout<<endl;
-    
+
+    tree.inorder();
+    tree.preorder();
 
 }

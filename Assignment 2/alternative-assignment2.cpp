@@ -10,9 +10,6 @@ Use Binary Search Tree for implementation.
 
 using namespace std;
 
-
-
-
 class Node{
 private:
     string word;
@@ -389,6 +386,8 @@ public:
 };
 
 int main(){
+    // Make it menu driven in the practical exam
+
     BST tree;
     tree.insert(1,"apple","a fruit");
     tree.insert(0,"banana","a fruit");

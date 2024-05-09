@@ -1,16 +1,12 @@
 /*
 Name: Tirthraj Mahajan
 Class: SE-02
-Roll No: 21242
+Roll: 21242
 
-TITLE:
-To write a program for implementing optimal binary search tree
-
-PROBLEM STATEMENT DEFINITION
-
-Given sequence k = k1 <k2 < ... < kn of n sorted keys, with a search
-probability pi for each key ki . Build the Binary search tree that has
-
+Problem Statement
+Given sequence k = k1 <k2 < … <kn of n sorted keys, with a successful and unsuccessful 
+search probability pi and qi for each key ki. Build the Binary search tree that has the least 
+search cost given the access probability for each key
 */
 
 #include <iostream>
@@ -22,108 +18,35 @@ private:
     int k;
     int p;
     int q;
-    Node *left;
-    Node *right;
+    Node* left;
+    Node* right;
 public:
-    Node(){}
-    Node(int k, int p, int q, Node *left=NULL, Node* right=NULL):k(k),p(p),q(q),left(left),right(right){}
-    friend class Pair;
+    Node(){};
+    Node(int k, int p, int q):k(k),p(p),q(q),left(NULL),right(NULL){}
     friend class OBST;
 };
 
-class Pair{
-private:    
+class MatrixElement{
+private:
+    int weight;
     int cost;
     int root;
-    int weight;
 public:
-    Pair(){}
-    Pair(int cost, int root=-1, int weight=-1):cost(cost),root(root),weight(weight){};
+    MatrixElement(){}
+    MatrixElement(int weight, int cost, int root):weight(weight),cost(cost),root(root){}
     friend class OBST;
 };
-
 
 class OBST{
 private:
-    Pair **matrix;         // 2D Array
-    Node *indexTable;      
+    MatrixElement** matrix;
+    Node* nodeList;
     int nodes;
+    Node* root;
 
-    int W(int i, int j){
-        if(i>j) return 0;   
-        if(i==j){
-            return matrix[i][j].weight;
-        } 
-        if(matrix[i][j].weight!=-1) return matrix[i][j].weight;
-        matrix[i][j].weight = W(i,j-1) + indexTable[j].p + indexTable[j].q;
-        return matrix[i][j].weight;
-    }
-
-    int C(int i, int j){
-        if(i>=j) return 0;
-        
-        // Check if it is already inserted
-
-        if(matrix[i][j].cost!=-1) return matrix[i][j].cost;         // Using memorization in dynamic programming
-
-        int result = INT_MAX;
-        int curr = 0;
-        int root = -1;
-        for(int k=i+1; k<=j; k++){
-            curr = C(i,k-1) + C(k,j) + W(i,j);
-            if(curr<result){
-                result = curr;
-                root = k;
-            }
-        }
-        matrix[i][j].cost = result;
-        matrix[i][j].root = root;
-        return result;
-    }    
-
-
-    void optimize(){
-
-        for(int i=0; i<nodes; i++){
-            for(int j=0; j<nodes; j++){
-                if(i==j){
-                    matrix[i][j] = Pair(0,-1,indexTable[i].q);
-                }
-                else{
-                    matrix[i][j] = Pair(-1,-1);
-                }
-            }
-        }
-        
-        for(int diff=0; diff<nodes; diff++){
-            for(int i=0; i<nodes; i++){
-                for(int j=0; j<nodes; j++){
-                    if(j-i==diff){
-                        C(i,j);
-                    }
-                }
-            }
-        }
-
-    }
-
-
-public:
-    OBST(int n):nodes(n+1){
-        matrix = new Pair*[nodes];
-        indexTable = new Node[nodes];
-        for(int i=0; i<nodes; i++){
-            matrix[i] = new Pair[nodes];
-        }
-    }
-
-    void enterNodes(){
-        cout<<"Enter k(i), p(i) and q(i)"<<endl;
-        int k = -1;
-        int p = -1;
-        int q = -1;
-        indexTable[0] = Node(-1,-1,-1);
-
+    void instantiateNodeList(){
+        int k = -1 ,p = -1, q = -1;
+        cout<<"Enter values of k(i), p(i) and q(i) accordingly"<<endl;
         for(int i=0; i<nodes; i++){
             if(i!=0){
                 cout<<"k"<<i<<" : ";
@@ -133,42 +56,85 @@ public:
             }
             cout<<"q"<<i<<" : ";
             cin>>q;
-            indexTable[i] = Node(k,p,q);
+            nodeList[i] = Node(k,p,q);
         }
-
-        optimize();
     }
 
-    void print(){
-        cout<<endl;
+    void instantiateMatrix(){
         for(int i=0; i<nodes; i++){
             for(int j=0; j<nodes; j++){
-                cout<<matrix[i][j].cost<<" ("<<matrix[i][j].root<<") ("<<matrix[i][j].weight<<") ";
+                if(i==j){
+                    matrix[i][j] = MatrixElement(nodeList[i].q,0,-1);
+                }
+                else{
+                    matrix[i][j] = MatrixElement(-1, -1, -1);
+                }
             }
-            cout<<endl;
+        }
+    }
+    
+    void optimize(){
+        for(int diff=0; diff<nodes; diff++){
+            for(int i=0; i<nodes; i++){
+                for(int j=0; j<nodes; j++){
+                    if(j-i==diff){
+                        C(i,j);
+                    }
+
+                }
+            }
+
         }
     }
 
+    int C(int i, int j){
+        if(i>=j) return 0;
+
+        if(matrix[i][j].cost!=-1) return matrix[i][j].cost;
+
+        int minCost = INT_MAX;
+        int minRoot = -1;
+        
+        for(int k = i+1; k<=j; k++){
+            int cost = C(i,k-1) + C(k,j) + W(i,j);
+            if(cost<minCost){
+                minCost = cost;
+                minRoot = k;
+            }
+        }
+
+        matrix[i][j].cost = minCost;
+        matrix[i][j].root = minRoot;
+
+        return matrix[i][j].cost;
+    }
+
+    int W(int i, int j){
+        if(i>j) return 0;
+        if(i==j) return matrix[i][j].weight;
+
+        if(matrix[i][j].weight!=-1) return matrix[i][j].weight;
+
+        matrix[i][j].weight = W(i,j-1) + nodeList[j].p + nodeList[j].q;
+
+        return matrix[i][j].weight;
+    }
 
     Node* constructTree(int i, int j){
         if(i>=j) return NULL;
         
         int k = matrix[i][j].root;
-        Node* root = &indexTable[k];
-        root->left = constructTree(i,k-1);
-        root->right = constructTree(k, j);
-        return root;
-    }
-
-    int totalCost(){
-        return matrix[0][nodes-1].cost;
+        Node* node = &nodeList[k];
+        node->left = constructTree(i,k-1);
+        node->right = constructTree(k,j);
+        return node;
     }
 
     void inorder(Node* node){
         if(!node) return;
         inorder(node->left);
         cout<<node->k<<" ";
-        inorder(node->right); 
+        inorder(node->right);
     }
 
     void preorder(Node* node){
@@ -178,18 +144,95 @@ public:
         preorder(node->right);
     }
 
+    void printMatrix(){
+        for(int i=0; i<nodes; i++){
+            for(int j=0; j<nodes; j++){
+                cout<<matrix[i][j].cost<<"    ";
+            }
+            cout<<endl;
+        }
+    }
+
+    int sumProbabilities(){
+        int sum = 0;
+        for(int i=0; i<nodes; i++){
+            if(i!=0){
+                sum += nodeList[i].p;
+            }
+            sum += nodeList[i].q;
+        }
+        return sum;
+    }
+
+
+public: 
+    OBST(int n):nodes(n+1){
+        matrix = new MatrixElement*[nodes];
+        nodeList = new Node[nodes];
+        for(int i=0; i<nodes; i++){
+            matrix[i] = new MatrixElement[nodes];
+        }
+        instantiateNodeList();
+        instantiateMatrix();
+        optimize();
+        root = constructTree(0,nodes-1);
+    }
+
+    void displayCost(){
+        int summationOfProbabilities = sumProbabilities();
+        float costOfOBST = (float)matrix[0][nodes-1].cost;
+        if(summationOfProbabilities!=0){
+            costOfOBST = costOfOBST/summationOfProbabilities;
+        }
+
+        cout<<"==== Cost of OBST ===="<<endl;
+        cout<<"Total Cost : "<<matrix[0][nodes-1].cost<<endl;
+        cout<<"Probability Sum : "<<summationOfProbabilities<<endl;
+        cout<<"Therefore final cost of OBST : "<<costOfOBST<<endl;
+        cout<<endl; 
+    }
+
+    void inorderTraversal(){
+        cout<<"=== Inorder Traversal ==="<<endl;
+        inorder(root);
+        cout<<endl<<"----- END -----"<<endl;
+    }
+
+    void preorderTraversal(){
+        cout<<"=== Preorder Traversal ==="<<endl;
+        preorder(root);
+        cout<<endl<<"----- END -----"<<endl;
+    }
+
+    void print(){
+        printMatrix();
+    }
+
 };
 
 
 int main(){
+
+/*
+Reference Question:
+https://youtu.be/wAy6nDMPYAE?si=Pf7gucJCdujIrt3P&t=3141
+
+    0   1   2   3   4
+k   x   10  20  30  40
+p   x   3   3   1   1
+q   2   3   1   1   1
+
+Total Cost = 36
+Summation of Probabilities = 16
+Final Cost => 36/16 = 2
+
+
+direct i/p : 2 10 3 3 20 3 1 30 1 1 40 1 1
+*/
+
     OBST tree(4);
-    tree.enterNodes();
+    tree.displayCost();
+    tree.inorderTraversal();
+    tree.preorderTraversal();
     tree.print();
-    Node* root = tree.constructTree(0,4);
-    cout<<"Total cost : "<<tree.totalCost()<<endl;
-    tree.inorder(root);
-    cout<<endl;
-    tree.preorder(root);
-
 }
-

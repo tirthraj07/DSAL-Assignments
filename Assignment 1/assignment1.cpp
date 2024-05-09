@@ -1,4 +1,8 @@
 /*
+Name: Tirthraj Mahajan
+Class: SE-02
+Roll No: 21242
+
 Beginning with an empty binary tree, construct binary tree by inserting the values in the 
 order given. After constructing a binary tree perform following operations on it-
 • Perform preorder recursive traversal 
@@ -172,6 +176,14 @@ class Tree{
 private:
     Node* root;
 
+    Node* copyTree(Node* root){
+        if(root == nullptr ) return nullptr;
+        Node* newNode = new Node(root->data);
+        newNode->left = copyTree(root->left);
+        newNode->right = copyTree(root->right);
+        return newNode;
+    }
+
     Node* constructTree(Node* &node){
         int data;
         cout<<"Enter Data (-1 to stop)"<<endl;
@@ -318,6 +330,10 @@ private:
 
 public:
     Tree():root(NULL){}
+    
+    Tree(Node* &cpy, Node* root){
+        cpy = copyTree(root);
+    }
 
     void createTree(){
         root = constructTree(root);
@@ -431,7 +447,9 @@ public:
 };
 
 int main(){
-// 1 7 2 -1 -1 6 5 -1 -1 11 -1 -1 9 -1 9 5 -1 -1 -1
+    // Make it menu driven in the practicals
+
+    // 1 7 2 -1 -1 6 5 -1 -1 11 -1 -1 9 -1 9 5 -1 -1 -1
     Tree t;
     t.createTree();
     t.preorder(0);
